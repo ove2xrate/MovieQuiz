@@ -2,6 +2,8 @@ import UIKit
 final class MovieQuizViewController: UIViewController {
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    @IBOutlet private weak var noButtonClicked: UIButton!
+    @IBOutlet private weak var yesButtonClicked: UIButton!
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
@@ -47,18 +49,18 @@ final class MovieQuizViewController: UIViewController {
                 text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: false)
         ]
-    struct QuizStepViewModel {
+    private struct QuizStepViewModel {
       let image: UIImage
       let question: String
       let questionNumber: String
     }
 
-    struct QuizResultsViewModel {
+    private struct QuizResultsViewModel {
       let title: String
       let text: String
       let buttonText: String
     }
-    struct QuizQuestion {
+    private struct QuizQuestion {
       let image: String
       let text: String
       let correctAnswer: Bool
@@ -104,17 +106,6 @@ final class MovieQuizViewController: UIViewController {
         }
     }
 
-    @IBAction func yesButtonClicked(_ sender: Any) {
-        let givenAnswer = true
-        let currentQuestion = questions[currentQuestionIndex]
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-  }
-    
-    @IBAction func noButtonClicked(_ sender: Any) {
-        let givenAnswer = false
-        let currentQuestion = questions[currentQuestionIndex]
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-   }
     private func show(quiz step: QuizStepViewModel) {
       imageView.image = step.image
       textLabel.text = step.question
@@ -141,8 +132,26 @@ final class MovieQuizViewController: UIViewController {
             self.present(alert, animated: true, completion: nil)
         }
     
+    @IBAction private func yesButtonClicked(_ sender: Any) {
+        let givenAnswer = true
+        let currentQuestion = questions[currentQuestionIndex]
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+  }
+    
+    @IBAction private func noButtonClicked(_ sender: Any) {
+        let givenAnswer = false
+        let currentQuestion = questions[currentQuestionIndex]
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+   }
+    
     override func viewDidLoad() {
     super.viewDidLoad()
+    noButtonClicked.layer.cornerRadius = 15.0
+    noButtonClicked.clipsToBounds = true
+    yesButtonClicked.layer.cornerRadius = 15.0
+    yesButtonClicked.clipsToBounds = true
+    imageView.layer.cornerRadius = 20.0
+    imageView.clipsToBounds = true
     let currentQuestion = questions[currentQuestionIndex]
     show(quiz: convert(model: currentQuestion))
     }
