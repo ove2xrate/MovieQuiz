@@ -1,11 +1,8 @@
 import Foundation
 import UIKit
 final class AlertPresenter {
-    private var currentQuestionIndex = 0
-    private var correctAnswers = 0
     private var questionFactory: QuestionFactoryProtocol?
     private var viewController: UIViewController?
-    
     
     init(viewController:UIViewController) {
         self.viewController = viewController

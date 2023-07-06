@@ -2,24 +2,62 @@ import UIKit
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    private let questionsAmount: Int = 10
     private var alertPresent: AlertPresenter?
+    private var questionFactory: QuestionFactoryProtocol?
+    private var currentQuestion: QuizQuestion?
+    private var statisticService: StatisticService?
     
     @IBOutlet private weak var noButton: UIButton!
     @IBOutlet private weak var yesButton: UIButton!
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-    private let questionsAmount: Int = 10
-    private var questionFactory: QuestionFactoryProtocol?
-    private var currentQuestion: QuizQuestion?
-    private var statisticService: StatisticService?
+    // MARK: - func
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let questionStep = QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+        return QuizStepViewModel(
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        return questionStep
+    }
+    
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
+    
+    private func hideLoadingIndicator() {
+        activityIndicator.isHidden = true
+        activityIndicator.stopAnimating()
+    }
+    
+    func didLoadDataFromServer() {
+        activityIndicator.isHidden = true
+        questionFactory?.requestNextQuestion()
+    } 
+
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
+    }
+    
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator()
+            
+            let model = AlertModel(title: "Ошибка",
+                                   message: message,
+                                   buttonText: "Попробовать еще раз") { [weak self] in
+                guard let self = self else { return }
+                
+                self.currentQuestionIndex = 0
+                self.correctAnswers = 0
+                
+                showLoadingIndicator()
+                questionFactory?.loadData()
+            }
+            
+        alertPresent?.show(alertPresent: model)
     }
     
     private func showAnswerResult(isCorrect: Bool) {
@@ -84,6 +122,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             let components: [String] = [
                 currentGameResultLine, totalPlayCountLine, bestGameInfoLine, averageAccurancyLine
             ]
+        
             let resultMessage = components.joined(separator: "\n")
             
             return resultMessage
@@ -110,12 +149,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
-
+    // MARK: - viewDidLoad
     override func viewDidLoad() {
         print(Bundle.main.bundlePath)
         super.viewDidLoad()
         alertPresent = AlertPresenter(viewController: self)
-        questionFactory = QuestionFactory(delegate: self)
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        
         questionFactory?.requestNextQuestion()
         statisticService = StatisticServiceImplementation()
             noButton.layer.cornerRadius = 15.0
@@ -124,6 +164,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             yesButton.clipsToBounds = true
             imageView.layer.cornerRadius = 20.0
             imageView.clipsToBounds = true
+        
+        showLoadingIndicator()
+        questionFactory?.loadData()
         }
     
     // MARK: - QuestionFactoryDelegate
